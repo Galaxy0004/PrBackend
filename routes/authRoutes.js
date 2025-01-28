@@ -15,8 +15,8 @@ router.get(
   "/google/callback",
   passport.authenticate("google", { failureRedirect: "/" }),
   (req, res) => {
-    // Redirect to a success page or send a response
-    res.status(200).json({ user: req.user });
+    res.redirect("http://localhost:3000/home"); // Direct the user to the home page or other pages
+
   }
 );
 
@@ -27,3 +27,5 @@ router.get("/logout", logoutUser);
 router.get("/current_user", getCurrentUser);
 
 module.exports = router;
+
+
