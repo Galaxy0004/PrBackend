@@ -32,6 +32,8 @@ app.use(
     saveUninitialized: true,
   })
 );
+const chatbotRoutes = require("./routes/chatbotRoutes");
+app.use("/chatbot", chatbotRoutes);
 
 // Passport configuration
 require("./config/passport"); // Import Passport configuration
