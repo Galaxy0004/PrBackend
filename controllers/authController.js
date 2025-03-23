@@ -1,6 +1,9 @@
 exports.getCurrentUser = (req, res) => {
   if (req.isAuthenticated()) {
-    res.status(200).json({ user: req.user });
+    res.status(200).json({ 
+      user: req.user,
+      profilePicture: req.user.picture || null, // Include profile image
+    });
   } else {
     res.status(401).json({ message: "Not authenticated" });
   }

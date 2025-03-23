@@ -23,17 +23,33 @@ const io = socketIo(server, {
 });
 
 // Middleware
-app.use(cors());
+
+const allowedOrigins = ["http://localhost:3000"]; // ✅ Add your frontend URL
+
+app.use(
+  cors({
+    origin: allowedOrigins, // ✅ Explicitly allow frontend
+    credentials: true, // ✅ Allow credentials (cookies, sessions)
+  })
+);
 app.use(express.json());
 app.use(
   session({
     secret: process.env.SESSION_SECRET, // Secret for session encryption
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false, // ✅ Set to false (more secure)
+    cookie: {
+      secure: false, // ❌ Should be true in production (HTTPS)
+      httpOnly: true,
+      sameSite: "lax", // ✅ Allows frontend requests
+    },
   })
 );
+
 const chatbotRoutes = require("./routes/chatbotRoutes");
 app.use("/chatbot", chatbotRoutes);
+const quizRoutes = require("./routes/quizRoutes");
+app.use("/quiz", quizRoutes);
 
 // Passport configuration
 require("./config/passport"); // Import Passport configuration

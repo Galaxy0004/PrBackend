@@ -11,19 +11,28 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        // Find or create user in database
+        console.log("Google Profile:", profile); // Debugging log
+
+        // Ensure profile has an email
+        const email = profile.emails?.[0]?.value || null;
+
+        // Check if user exists
         let user = await User.findOne({ googleId: profile.id });
 
         if (!user) {
           user = await User.create({
             googleId: profile.id,
             name: profile.displayName,
-            email: profile.emails[0].value,
+            email: email,
           });
+          console.log("New user created:", user);
+        } else {
+          console.log("Existing user logged in:", user);
         }
 
         done(null, user);
       } catch (err) {
+        console.error("Error in Google Strategy:", err);
         done(err, null);
       }
     }
@@ -41,6 +50,7 @@ passport.deserializeUser(async (id, done) => {
     const user = await User.findById(id);
     done(null, user);
   } catch (err) {
+    console.error("Error in deserializing user:", err);
     done(err, null);
   }
 });

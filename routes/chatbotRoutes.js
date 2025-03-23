@@ -13,14 +13,20 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Message is required" });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    // Use `gemini-1.5-pro` instead of `gemini-pro`
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
-    const result = await model.generateContent(userMessage);
-    const reply = result.response.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't generate a response.";
+    // Generate response using correct format
+    const result = await model.generateContent({
+      contents: [{ parts: [{ text: userMessage }] }]
+    });
+
+    const reply = result.response?.candidates?.[0]?.content?.parts?.[0]?.text || 
+                  "Sorry, I couldn't generate a response.";
 
     res.json({ reply });
   } catch (error) {
-    console.error("Chatbot Error:", error.message);
+    console.error("Chatbot Error:", error.response?.data || error.message);
     res.status(500).json({ error: "Failed to get chatbot response" });
   }
 });
