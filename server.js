@@ -21,10 +21,6 @@ const io = socketIo(server, {
 });
 
 
-
-
-
-
 // Initialize Google Generative AI
 let genAI;
 if (process.env.GEMINI_API_KEY) {
@@ -61,6 +57,21 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
 }));
 
+
+app.use(express.json());
+
+//session
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: false, // Set to true in production (HTTPS)
+    httpOnly: true,
+    sameSite: "lax",
+  },
+}));
+
 // Passport configuration
 require("./config/passport");
 app.use(passport.initialize());
@@ -76,8 +87,26 @@ app.use("/api/profile", require("./routes/profileRoutes"));
 
 
 app.use("/auth", require("./routes/authRoutes"));
-app.use("/chatbot", require("./routes/chatbotRoutes"));
+//app.use("/chatbot", require("./routes/chatbotRoutes"));
 app.use("/api/rooms", require("./routes/studyRoomRoutes"));
+   
+//const chatbotRoutes = require("./routes/chatbotRoutes");
+app.use("/chatbot", chatbotRoutes);
+
+const quizRoutes = require("./routes/quizRoutes");
+app.use("/quiz", quizRoutes);
+
+const studyRoutes = require('./routes/studylogs');
+app.use('/api/study', studyRoutes);
+
+const forumRoutes = require("./routes/forum");
+app.use("/api/forum", forumRoutes);
+
+const notesRoutes = require("./routes/notes");
+app.use("/api/notes", notesRoutes);
+
+const generateQuizRoutes = require("./routes/ssgeneratequiz");
+app.use("/api/quiz", generateQuizRoutes);
 
 // Health check
 app.get("/", (req, res) => {
