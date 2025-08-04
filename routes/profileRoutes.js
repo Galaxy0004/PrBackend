@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Profile = require("../models/Profile");
-const User = require("../models/User");
+//const User = require("../models/User");
 
 const requireAuth = (req, res, next) => {
   if (!req.user) return res.status(401).json({ error: "Not authenticated" });
