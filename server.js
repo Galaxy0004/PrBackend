@@ -1,94 +1,82 @@
 const express = require("express");
-const dotenv = require("dotenv");
+const dotenv =require("dotenv");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const session = require("express-session");
 const passport = require("passport");
 const http = require("http");
 const socketIo = require("socket.io");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-const Room = require("./models/Room");
 
+// Load environment variables
 dotenv.config();
 
+// Initialize Express app
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: "http://localhost:3000",
     methods: ["GET", "POST"],
   },
 });
 
+// --- MIDDLEWARE SETUP ---
+// This order is very important
 
-
-
-
-
-// Initialize Google Generative AI
-let genAI;
-if (process.env.GEMINI_API_KEY) {
-  genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-} else {
-  console.warn("GEMINI_API_KEY not found. Chatbot functionality will be disabled.");
-}
-
-// Database connection
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log("Connected to MongoDB"))
-.catch(err => console.error("MongoDB connection error:", err));
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: true,
-  })
-);
-const chatbotRoutes = require("./routes/chatbotRoutes");
-app.use("/chatbot", chatbotRoutes);
-
+// 1. CORS and Body Parser
 app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:3000",
+  origin: "http://localhost:3000",
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
+}));
+app.use(express.json());
+
+// 2. Session
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: false, // Set to true in production (HTTPS)
+    httpOnly: true,
+    sameSite: "lax",
+  },
 }));
 
-// Passport configuration
+// 3. Passport Initialization (MUST be after session)
+// This line loads the strategy configuration (e.g., GoogleStrategy)
 require("./config/passport");
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Routes
-app.use((req, res, next) => {
-  console.log(`Incoming ${req.method} request to ${req.originalUrl}`);
-  next();
-});
+// --- API ROUTES ---
+// 4. Import and mount all your routes AFTER authentication middleware is ready
 
-app.use("/api/profile", require("./routes/profileRoutes"));
+const authRoutes = require("./routes/authRoutes");
+app.use("/auth", authRoutes);
 
+const chatbotRoutes = require("./routes/chatbotRoutes");
+app.use("/chatbot", chatbotRoutes);
 
-app.use("/auth", require("./routes/authRoutes"));
-app.use("/chatbot", require("./routes/chatbotRoutes"));
+const quizRoutes = require("./routes/quizRoutes");
+app.use("/quiz", quizRoutes);
+
+const studyRoutes = require('./routes/studylogs');
+app.use('/api/study', studyRoutes);
+
+const forumRoutes = require("./routes/forum");
+app.use("/api/forum", forumRoutes);
+
+const notesRoutes = require("./routes/notes");
+app.use("/api/notes", notesRoutes);
+
+const generateQuizRoutes = require("./routes/ssgeneratequiz");
+app.use("/api/quiz", generateQuizRoutes);
+
 app.use("/api/rooms", require("./routes/studyRoomRoutes"));
 
-// Health check
-app.get("/", (req, res) => {
-  res.status(200).json({ status: "Server is running!" });
-});
+// Database connection
+require("./config/db");
 
-// Error handling
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: "Something went wrong!" });
-});
 
 // Socket.IO Logic
 const activeRooms = {}; // { roomName: Set of users }

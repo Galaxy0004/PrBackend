@@ -1,44 +1,39 @@
 const express = require("express");
 const passport = require("passport");
+const { getCurrentUser, logoutUser } = require("../controllers/authController");
+
 const router = express.Router();
 
+// Initiate Google OAuth
 router.get(
   "/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
 
+// Google OAuth callback
 router.get(
   "/google/callback",
   passport.authenticate("google", { failureRedirect: "/" }),
   (req, res) => {
+    // Redirect with session persistence
     res.redirect("http://localhost:3000/home");
   }
 );
 
-router.get("/check-auth", (req, res) => {
-  res.json({ isAuthenticated: req.isAuthenticated() });
-});
-
-router.get("/logout", (req, res) => {
-  req.logout((err) => {
-    if (err) {
-      return res.status(500).json({ error: "Logout failed" });
-    }
-    req.session.destroy();
-    res.clearCookie("connect.sid");
-    res.json({ message: "Logged out successfully" });
-  });
-});
-
+// Get current authenticated user
 router.get("/current_user", (req, res) => {
-  if (!req.user) {
-    return res.status(401).json({ error: "Not authenticated" });
+  if (req.isAuthenticated()) {
+    res.json(req.user); // Send user session data
+  } else {
+    res.status(401).json({ error: "Not authenticated" });
   }
-  res.json({
-    id: req.user._id,
-    googleId: req.user.googleId,
-    name: req.user.name,
-    email: req.user.email
+});
+
+// Logout user
+router.get("/logout", (req, res, next) => {
+  req.logout((err) => {
+    if (err) return next(err);
+    res.redirect("http://localhost:3000"); // Redirect after logout
   });
 });
 
