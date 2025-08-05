@@ -1,7 +1,7 @@
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const path = require("path");
-const User = require(path.join(__dirname, "..", "models", "User"));
+const User = require(path.join(__dirname, "..", "models", "user"));
 passport.use(
   new GoogleStrategy(
     {
