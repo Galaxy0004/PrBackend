@@ -30,11 +30,17 @@ router.get("/current_user", (req, res) => {
 });
 
 // Logout user
-router.get("/logout", (req, res, next) => {
+router.post("/logout", (req, res, next) => {
   req.logout((err) => {
-    if (err) return next(err);
-    res.redirect("http://localhost:3000"); // Redirect after logout
+    if (err) {
+      console.error("Logout error:", err);
+      return res.status(500).json({ error: "Logout failed" });
+    }
+    // Destroy the session and send a success response
+    req.session.destroy();
+    res.status(200).json({ message: "Logged out successfully" });
   });
 });
+
 
 module.exports = router;

@@ -3,7 +3,6 @@ const router = express.Router();
 const Note = require("../models/note");
 
 // Simple middleware to ensure the user is authenticated
-// Passport adds req.isAuthenticated() to the request object.
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
     return next();
@@ -14,11 +13,8 @@ function ensureAuthenticated(req, res, next) {
 // --- SECURE NOTE ROUTES ---
 
 // Create a new note for the logged-in user
-// We use ensureAuthenticated to protect this route.
 router.post("/", ensureAuthenticated, async (req, res) => {
   const { title, content } = req.body;
-  // Use the authenticated user's ID from the session (req.user.id).
-  // We completely ignore anything the client might send as a userId.
   const userId = req.user.id;
 
   try {
@@ -33,7 +29,6 @@ router.post("/", ensureAuthenticated, async (req, res) => {
 // Get all notes for the currently logged-in user
 router.get("/", ensureAuthenticated, async (req, res) => {
   try {
-    // Find notes where the userId matches the ID of the user from the session.
     const notes = await Note.find({ userId: req.user.id });
     res.json(notes);
   } catch (err) {
@@ -41,10 +36,31 @@ router.get("/", ensureAuthenticated, async (req, res) => {
   }
 });
 
+// This is the new route you added to routes/notes.js
+router.get("/recent", ensureAuthenticated, async (req, res) => {
+  try {
+    // ✅ FIX: The .limit(2) below ensures only the last 2 notes are sent.
+    const notes = await Note.find({ userId: req.user.id })
+      .sort({ createdAt: -1 })
+      .limit(2);
+
+    const notesWithPreview = notes.map(note => ({
+      id: note._id,
+      title: note.title,
+      preview: note.content.substring(0, 50) + "...",
+      date: note.createdAt
+    }));
+
+    res.json(notesWithPreview);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch recent notes" });
+  }
+});
+
 // Delete a specific note by its ID
 router.delete("/:noteId", ensureAuthenticated, async (req, res) => {
   const { noteId } = req.params;
-  const userId = req.user.id; // The ID of the user making the request.
+  const userId = req.user.id;
 
   try {
     const note = await Note.findById(noteId);
@@ -53,8 +69,6 @@ router.delete("/:noteId", ensureAuthenticated, async (req, res) => {
       return res.status(404).json({ error: "Note not found" });
     }
 
-    // CRITICAL SECURITY CHECK:
-    // Ensure the note's owner ID matches the logged-in user's ID.
     if (note.userId.toString() !== userId) {
       return res.status(403).json({ error: "Forbidden: You do not have permission to delete this note." });
     }
