@@ -15,6 +15,7 @@ const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
 
 // Initialize Express app
 const app = express();
+app.set("trust proxy", 1); // Trust the first proxy
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
@@ -41,7 +42,7 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === "production", // Set to true in production (HTTPS)
+      secure: true, // Set to true in production (HTTPS)
       httpOnly: true,
       sameSite: "lax", // Use "none" if you have cross-domain issues, but requires secure: true
     },
