@@ -10,13 +10,17 @@ router.get(
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
 
-// Google OAuth callback
+const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
+
 router.get(
   "/google/callback",
-  passport.authenticate("google", { failureRedirect: "/" }),
+  passport.authenticate("google", {
+    // Also a good idea to update the failure redirect for production
+    failureRedirect: `${CLIENT_URL}/login/failed`,
+  }),
   (req, res) => {
-    // Redirect with session persistence
-    res.redirect("http://localhost:3000/home");
+    // This now correctly sends the user to your live Vercel site's home page
+    res.redirect(`${CLIENT_URL}/home`);
   }
 );
 
