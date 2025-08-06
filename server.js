@@ -44,7 +44,7 @@ app.use(
     cookie: {
       secure: true, // Set to true in production (HTTPS)
       httpOnly: true,
-      sameSite: "lax", // Use "none" if you have cross-domain issues, but requires secure: true
+      sameSite: "none", // Use "none" if you have cross-domain issues, but requires secure: true
     },
   })
 );
