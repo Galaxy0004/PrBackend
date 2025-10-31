@@ -1,4 +1,4 @@
-# MeritMaze - Backend サーバー
+# MeritMaze - Backend 
 
 Welcome to the backend repository for **MeritMaze**. This server powers the entire MeritMaze application, handling everything from user authentication and data storage to real-time interactions and AI integrations.
 
